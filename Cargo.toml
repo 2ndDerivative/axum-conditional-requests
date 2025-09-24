@@ -1,0 +1,16 @@
+[package]
+name = "axum-conditional-requests"
+authors = ["Niclas Klugmann <niclas@klugmann.de>"]
+license = "MIT"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum-core = "0.5.2"
+chrono = { version = "0.4.42", default-features = false, features = ["std"] }
+http = { version = "1.3.1", default-features = false }
+tracing = { version = "0.1.41", optional = true }
+
+[features]
+tracing = ["dep:tracing"]
+
