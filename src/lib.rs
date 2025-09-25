@@ -4,15 +4,18 @@ use axum_core::{
     extract::OptionalFromRequestParts,
     response::{AppendHeaders, IntoResponse, IntoResponseParts, ResponseParts},
 };
-use chrono::{DateTime, Timelike, Utc};
+use chrono::{DateTime, TimeZone, Timelike, Utc};
 use http::{
     HeaderValue, Method, StatusCode,
     header::{IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED},
     request::Parts,
 };
 
+use crate::timezone::HttpGmt;
+mod timezone;
+
 #[derive(Debug)]
-pub struct LastModified(DateTime<Utc>);
+pub struct LastModified(DateTime<HttpGmt>);
 impl IntoResponseParts for LastModified {
     type Error = Infallible;
 
@@ -63,11 +66,12 @@ impl<S: Send + Sync> OptionalFromRequestParts<S> for IfModifiedSince {
 
 #[derive(Debug)]
 pub struct MaybeUnmodified<T> {
-    last_modified: DateTime<Utc>,
+    last_modified: DateTime<HttpGmt>,
     payload: MaybeModifiedPayload<T>,
 }
 impl<T> MaybeUnmodified<T> {
-    pub fn from_header(header: Option<IfModifiedSince>, last_modified: DateTime<Utc>, payload: T) -> Self {
+    pub fn from_header<Tz: TimeZone>(header: Option<IfModifiedSince>, last_modified: DateTime<Tz>, payload: T) -> Self {
+        let last_modified: DateTime<HttpGmt> = HttpGmt.from_local_datetime(&last_modified.naive_local()).unwrap();
         let Some(header) = header else {
             return MaybeUnmodified {
                 last_modified,
