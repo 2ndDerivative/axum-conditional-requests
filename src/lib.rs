@@ -4,7 +4,7 @@ use axum_core::{
     extract::OptionalFromRequestParts,
     response::{AppendHeaders, IntoResponse, IntoResponseParts, ResponseParts},
 };
-use chrono::{DateTime, TimeZone, Timelike, Utc};
+use chrono::{DateTime, TimeZone, Timelike};
 use http::{
     HeaderValue, Method, StatusCode,
     header::{IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED},
@@ -35,7 +35,7 @@ impl IntoResponse for LastModified {
 /// Only implements OptionalFromRequestParts to force the user
 /// to handle the case of ignoring this header,
 /// as extracting this header is not supposed to error out, but MUST instead be ignored.
-pub struct IfModifiedSince(DateTime<Utc>);
+pub struct IfModifiedSince(DateTime<HttpGmt>);
 impl<S: Send + Sync> OptionalFromRequestParts<S> for IfModifiedSince {
     type Rejection = Infallible;
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Option<Self>, Self::Rejection> {
@@ -60,7 +60,7 @@ impl<S: Send + Sync> OptionalFromRequestParts<S> for IfModifiedSince {
             tracing::warn!("Client sent invalid date in if-modified-since header");
             return Ok(None);
         };
-        Ok(Some(Self(time.into())))
+        Ok(Some(Self(HttpGmt.from_local_datetime(&time.naive_utc()).unwrap())))
     }
 }
 
@@ -71,7 +71,7 @@ pub struct MaybeUnmodified<T> {
 }
 impl<T> MaybeUnmodified<T> {
     pub fn from_header<Tz: TimeZone>(header: Option<IfModifiedSince>, last_modified: DateTime<Tz>, payload: T) -> Self {
-        let last_modified: DateTime<HttpGmt> = HttpGmt.from_local_datetime(&last_modified.naive_local()).unwrap();
+        let last_modified: DateTime<HttpGmt> = HttpGmt.from_local_datetime(&last_modified.naive_utc()).unwrap();
         let Some(header) = header else {
             return MaybeUnmodified {
                 last_modified,
