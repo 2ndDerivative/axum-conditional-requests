@@ -72,13 +72,15 @@ pub struct MaybeUnmodified<T> {
 impl<T> MaybeUnmodified<T> {
     pub fn from_header<Tz: TimeZone>(header: Option<IfModifiedSince>, last_modified: DateTime<Tz>, payload: T) -> Self {
         let last_modified: DateTime<HttpGmt> = HttpGmt.from_local_datetime(&last_modified.naive_utc()).unwrap();
-        let Some(header) = header else {
+        let Some(IfModifiedSince(header_time)) = header else {
             return MaybeUnmodified {
                 last_modified,
                 payload: MaybeModifiedPayload::New(payload),
             };
         };
-        let payload = if last_modified.with_second(0).unwrap() <= header.0.with_second(0).unwrap() {
+        let last_modified = last_modified.with_second(0).unwrap().with_nanosecond(0).unwrap();
+        let header_time = header_time.with_second(0).unwrap().with_nanosecond(0).unwrap();
+        let payload = if last_modified <= header_time {
             MaybeModifiedPayload::NotModified
         } else {
             MaybeModifiedPayload::New(payload)
