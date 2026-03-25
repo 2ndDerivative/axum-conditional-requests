@@ -4,7 +4,7 @@ authors = ["Niclas Klugmann <niclas@klugmann.de>"]
 description = "Axum extractors and wrappers for IfModifiedSince and LastModified headers."
 license = "MIT"
 repository = "https://github.com/2ndDerivative/axum-conditional-requests"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 keywords = ["axum", "http", "caching"]
 
@@ -16,4 +16,3 @@ tracing = { version = "0.1.41", optional = true }
 
 [features]
 tracing = ["dep:tracing"]
-
