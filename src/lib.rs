@@ -78,8 +78,8 @@ impl<T> MaybeUnmodified<T> {
                 payload: MaybeModifiedPayload::New(payload),
             };
         };
-        let last_modified = last_modified.with_second(0).unwrap().with_nanosecond(0).unwrap();
-        let header_time = header_time.with_second(0).unwrap().with_nanosecond(0).unwrap();
+        let last_modified = last_modified.with_nanosecond(0).unwrap();
+        let header_time = header_time.with_nanosecond(0).unwrap();
         let payload = if last_modified <= header_time {
             MaybeModifiedPayload::NotModified
         } else {
